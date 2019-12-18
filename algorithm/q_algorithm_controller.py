@@ -2,6 +2,8 @@ import random
 import time
 from operator import itemgetter
 
+from numpy import mean
+
 from models.deep_learning_model import DeepLearningModel
 from models.lookup_table_model import LookupTableModel
 
@@ -18,25 +20,35 @@ class QAlgorithmController:
         self.model = DeepLearningModel(self.environment) if is_deep_learning else LookupTableModel(self.environment)
 
     def train(self, number_of_games):
+        scores = []
         for i in range(number_of_games):
             current_state = self.environment.reset()
+            sum_reward = 0
             while True:
                 new_state, reward, is_done, = self.train_one_round(current_state)
                 current_state = new_state
+                sum_reward = sum_reward + reward
                 if is_done:
                     break
+            scores.append(sum_reward)
+            print('Mean ', mean(scores))
         self.environment.close()
 
     def train_and_render(self, number_of_games):
+        scores = []
         for i in range(number_of_games):
             current_state = self.environment.reset()
+            sum_reward = 0
             while True:
                 time.sleep(0.1)
                 self.environment.render()
                 new_state, reward, is_done, = self.train_one_round(current_state)
                 current_state = new_state
+                sum_reward = sum_reward + reward
                 if is_done:
                     break
+            scores.append(sum_reward)
+            print('Mean ', mean(scores))
         self.environment.close()
 
     def train_one_round(self, state):

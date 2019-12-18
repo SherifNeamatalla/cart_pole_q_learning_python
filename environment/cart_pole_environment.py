@@ -6,7 +6,7 @@ from environment.environment import Environment
 class CartPoleEnvironment(Environment):
     def __init__(self) -> None:
         super().__init__()
-        self.env = gym.make('CartPole-v1')
+        self.env = gym.make('CartPole-v0')
 
     def perform_action(self, state, action):
         return self.env.step(action)
@@ -22,8 +22,10 @@ class CartPoleEnvironment(Environment):
         while i < self.env.observation_space.high[0]:
             j = initial_j
             while j < self.env.observation_space.high[2]:
-                state_tuple = (round(i, 1), round(j, 1))
-                result.append(state_tuple)
+                for cart_velocity in range(2):
+                    for pole_velocity in range(2):
+                        state_tuple = (cart_velocity, pole_velocity, round(i, 1), round(j, 1))
+                        result.append(state_tuple)
                 j = j + 0.1
             i = i + 0.1
 
@@ -33,7 +35,9 @@ class CartPoleEnvironment(Environment):
         return self.env.action_space.sample()
 
     def get_state_id(self, state):
-        return round(state[0], 1), round(state[2], 1)
+        cart_velocity = 0 if state[1] <= 0 else 1
+        pole_velocity = 0 if state[3] <= 0 else 1
+        return cart_velocity, pole_velocity, round(state[0], 1), round(state[2], 1)
 
     def get_possible_actions(self):
         return self.env.action_space
