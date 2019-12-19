@@ -25,3 +25,6 @@ class Environment:
 
     def get_random_action(self):
         raise Exception('This is an interface! Method Not Implemented!')
+
+    def get_game_over_reward(self):
+        raise Exception('This is an interface! Method Not Implemented!')

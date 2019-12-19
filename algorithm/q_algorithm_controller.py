@@ -2,8 +2,6 @@ import random
 import time
 from operator import itemgetter
 
-from numpy import mean
-
 from models.deep_learning_model import DeepLearningModel
 from models.lookup_table_model import LookupTableModel
 
@@ -21,6 +19,7 @@ class QAlgorithmController:
 
     def train(self, number_of_games):
         scores = []
+        best_score = 0
         for i in range(number_of_games):
             current_state = self.environment.reset()
             sum_reward = 0
@@ -31,11 +30,15 @@ class QAlgorithmController:
                 if is_done:
                     break
             scores.append(sum_reward)
-            print('Mean ', mean(scores))
+            if sum_reward > best_score:
+                best_score = sum_reward
+        print('Average after  ', number_of_games, ' games : ', sum(scores) / len(scores))
+        print('Best score : ', best_score)
         self.environment.close()
 
     def train_and_render(self, number_of_games):
         scores = []
+        best_score = 0
         for i in range(number_of_games):
             current_state = self.environment.reset()
             sum_reward = 0
@@ -48,8 +51,39 @@ class QAlgorithmController:
                 if is_done:
                     break
             scores.append(sum_reward)
-            print('Mean ', mean(scores))
+            if sum_reward > best_score:
+                best_score = sum_reward
+            print('Game score : ', sum_reward)
+        print('Average after  ', number_of_games, ' games : ', sum(scores) / len(scores))
+        print('Best score : ', best_score)
         self.environment.close()
+
+    def play_random(self, number_of_games):
+        scores = []
+        best_score = 0
+        for i in range(number_of_games):
+            current_state = self.environment.reset()
+            sum_reward = 0
+            while True:
+                new_state, reward, is_done, = self.play_random_round(current_state)
+                current_state = new_state
+                sum_reward = sum_reward + reward
+                if is_done:
+                    break
+            if sum_reward > best_score:
+                best_score = sum_reward
+            scores.append(sum_reward)
+        print('Average after  ', number_of_games, ' games : ', sum(scores) / len(scores))
+        print('Best score : ', best_score)
+        self.environment.close()
+
+    def play_random_round(self, state):
+
+        current_action = self.environment.get_random_action()
+
+        new_state, reward, is_done, _ = self.environment.perform_action(state, current_action)
+
+        return new_state, reward, is_done
 
     def train_one_round(self, state):
 
@@ -58,6 +92,9 @@ class QAlgorithmController:
         new_state, reward, is_done, _ = self.environment.perform_action(state, current_action[0])
 
         current_q_value = current_action[1]
+
+        if is_done:
+            reward = self.environment.get_game_over_reward()
 
         new_q_value = self._calculate_new_q_value(current_q_value, reward, new_state)
 
@@ -71,8 +108,8 @@ class QAlgorithmController:
     def _calculate_new_q_value(self, current_q_value, reward, new_state):
         new_state_actions = self.model.predict(new_state)
         best_action_value_tuple = max(new_state_actions.items(), key=itemgetter(1))
-        return (
-                       1 - self.algorithm_configuration.learning_rate) * current_q_value + self.algorithm_configuration.learning_rate * (
+        return ((
+                        1 - self.algorithm_configuration.learning_rate) * current_q_value) + self.algorithm_configuration.learning_rate * (
                        reward + (self.algorithm_configuration.gamma * best_action_value_tuple[1]))
 
     def _get_current_action(self, state):
